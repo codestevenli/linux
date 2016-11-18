@@ -1,0 +1,109 @@
+时间同步
+#ntpdate time.nist.gov #同步互联网时间
+#echo "*/5 * * * * /usr/sbin/ntpdate time.nist.gov >/dev/null 2>&1" >>/var/spool/cron/root #每隔5分钟同步时间
+#crontab -l
+
+登录超时
+#export TMOUT=300 #生产环境5分钟较合理
+历史记录数
+#export  HISTSIZE=5
+#history
+#cat ~/.bash_history 
+#export HISTFILESIZE=5 #历史记录文件也调小
+永久生效
+#echo 'TMOUT=300' >>/etc/profile
+#echo 'HISTSIZE=5' >>/etc/profile
+#echo 'HISTFILESIZE=5' >>/etc/profile
+#source /etc/profile #使得配置文件生效
+清历史记录
+#echo 123456|passwd --stdin oldboy
+#history -c #清除所有记录
+#history #查看历史记录
+#history -d 行号 #清除指定记录
+#help history #history是系统命令，用help
+
+加大服务器文件描述符
+文件描述符是由无符号整数表示的句柄，进程使用它来标识打开的文件
+文件描述符的概念
+1.表示形式为整数数字（0-65535）
+2.进程使用的时候会占用文件描述符（标识打开的文件）
+查看默认的文件描述符
+#ulimit -n
+1024
+3.调整文件描述符
+#ulimit -SHn 65535
+
+#echo '*                 -           nofile        65535'>>/etc/security/limits.conf
+#tail  -1 /etc/security/limits.conf
+*                 -           nofile        65535
+配置完成后，需重新登录才可以生效，查看如下：
+#ulimit -n
+65535
+#cat /etc/security/limits.conf
+#<domain>            <type>      <item>    <value>
+    *                           -             nofile        65535
+调整内核参数文件/etc/sysctl.conf
+1.linux服务器内核参数优化
+所谓内核优化，主要是指linux系统中针对业务服务应用而进行的系统内核参数调整，
+优化并无一定的标准，下面以生产环境下linux常见的内核优化为例进行讲解，
+优化方法是，执行vim /etc/sysctl.conf 命令到文件结尾，然后拷贝如下内容并保存，sysctl -p生效
+net.ipv4.tcp_fin_timeout = 2 #表示套接字由本端要求关闭时间，默认值是60秒
+net.ip4.tcp_tw_reuse  =1      #表示开启重用，允许将TIME-WAIT sockets 重新用于新的TCP连接，默认值是0，表示关闭
+
+...121课http://yangrong.blog.51cto.com/6945369/1321594
+           http://oldboy.blog.51cto.com/2561410/1336488
+
+ #隐藏版本信息
+#cat /etc/issue
+CentOS release 6.6 (Final)
+#> /etc/issue #清空
+#cat /dev/null > /etc/issue #I清空
+
+#修改版本信息
+#vi /etc/motd
+RHEL 5.8 (Final)
+
+#锁定关键系统文件，防止提权被篡改
+#chattr +i /etc/passwd /etc/shadow /etc/group /etc/gshadow /etc/inittab /etc/hosts
+#which chattr
+/usr/bin/chattr
+#mv `which chattr` /opt/oldboy #移走改名oldboy
+
+#清除多余的系统虚拟账户
+
+#为grub菜单加密码
+1.先用/sbin/grub-md5-crypt产生一个MD5密码串
+#/sbin/grub-md5-crypt
+输入两次密码生成
+2.修改grub.conf文件
+#vi /etc/grub.conf
+14 password --md5 密码
+#注意：password要加在splashimage和title之间这段，否则可能不生效
+
+#禁止linux系统被ping
+#echo "net.ipv4.icmp_echo_ignore_all=1">>/etc/sysctl.conf
+#sysctl -p #生效
+
+#配置linux软件下载更新源地址
+#cat /etc/yum.repos.d/CentOS-Base.repo
+#mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak
+#wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo
+
+
+1.不用root管理，以普通用户的名义通过sudo授权管理
+2.更改默认的远程连接ssh服务端口，禁止root用户远程连接
+甚至要更改为只监听内网 ip
+3.定时自动更新服务器时间，使其和互联网时间同步
+4，配置yum更新源，从国内更新源下载安装软件包
+5.关闭selinux及IPtables
+6.调整文件描述符的数量，进程及文件打开都会消耗文件描述符
+7.定时自动清理邮件目录垃圾文件，防止inodes节点被占满
+8.精简并保留必要的开机自启动服务
+9.linux内核参数优化/etc/sysctl.conf,执行sysctl -p生效
+10.更改字符集，使其支持中文，但建议还是用英文字符集
+11.锁定关键系统文件
+12.清空/etc/issue
+13.清除多余的系统虚拟账户
+14.位grub菜单加密码
+15.禁止被ping
+16.升级漏洞软件

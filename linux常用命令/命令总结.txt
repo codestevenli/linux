@@ -1,0 +1,234 @@
+命令总结
+mkdir -p （递归创建目录） 创建目录的命令 make directory
+ls      -l (long ) d (directory)  显示目录或者文件 -a（all） 显示包括隐藏文件 全称 list
+          -F 给不同文件类型结尾加标识  -p 给目录加斜线
+          -r reverse 反转 -t 按修改时间排序
+	  -color =auto 给输出的不同类型文件加不同颜色
+	  -a 显示隐藏文件
+	  ls -l --time-style=long-iso，显示友好的长格式时间
+pwd    查看当前目录
+cd     切换目录层次change directory（- 上次的目录  ，~ 家目录）
+echo   打印输出内容（printf复杂的输出）
+        printf - format and print data
+vi/vim  类似win记事本/emeditor编辑器  命令模式 （:wq  :q  :q!  :wq!）
+            <==>插入模式（esc切换命令模式）
+	    w  write   q    quit     !强制
+         :set nu 显示行号 ，dd删除当前行，yy拷贝当前行，p粘贴，行号gg定位到该行
+         G尾行文件尾部，gg到文件头部
+cat    （concatenate）   查看文件内容或多行追加  -n 显示行号
+         cat >>a.txt<<EOF
+         sb is sb
+         no reason
+         EOF
+         补充tac - concatenate and print files in reverse
+         举例 [sb@sohai] $seq 3|tac
+             3
+             2
+             1
+cp       -apr    拷贝文件或目录  cp  源文件  目的目录 ，cp -r 源目录 目的目录
+              提示覆盖，不让提示 用全路径 /bin/cp
+              -a == -dpr,常用，拷贝目录最好的命令
+          -p或--preserve 　保留源文件或目录的属性。
+          -r 　递归处理，将指定目录下的文件与子目录一并处理。
+mv      移到目录或改名（rename命令）
+rm     -f强制删除文件    -r递归删除  删除文件或目录  -fr 删除指定的目录和文件
+rmdir    删除空目录，鸡肋命令
+head    头部 显示文件的头部 -n  行数   -行数，默认头部10行
+tail    尾巴  显示文件的尾部  -n行数    -行数，默认结尾10行
+         -f 跟踪监控一个文件结尾的变化跟踪文件有没有输出
+grep    （过滤）核心命令之一  （三剑客的老三） 排除-v  --revert-match   反转查找。
+           -Ei   --extended-regexp   将范本样式为延伸的普通表示法来使用。
+                     普通表示法不需要转义符‘\’转义
+                 --ignore-case   忽略字符大小写的差别
+
+	常用参数
+	-a：在二进制文件中，以文本文件的方式搜索数据
+	-c：计算找到'搜索字符串'的次数
+	-o：仅显示出匹配regexp的内容（用于统计出现在文中的次数）
+	-i：*忽略大小写的不同，所以大小写视为相同
+	-n：*在行首显示行号
+	-v：*反向选择，即显示没有‘搜索字符串’内容的那一行
+	-E：*扩展的grep，即egrep
+	--color=auto：一特定颜色高亮显示匹配关键字
+	-A: After的意思，显示匹配字符串及其后n行的数据
+	-B：before的意思，显示匹配字符串及其前n行的数据
+	-C：显示匹配字符串及其前后各num行
+egrep   相当于grep -E
+sed      取各种内容 （三剑客的老二）  -n取消默认输出   p=print d=delete 
+            -i 直接编辑文件选项，会匹配并替换你想要的
+alias   显示设置别名
+unalias   取消别名
+which    查看命令的路径whereis,locate,find
+find    查找命令 -type  (f d) -name 'sohai' 按名字查找 -mtime 按照修改时间查找
+tree  -L (层次) 查看目录结构
+xargs    用于find/ls 的输出交给后面处理
+seq   -s 指定分隔符  打印数字序列 echo{1..5}
+man      查看命令及配置文件等的帮助
+touch    创建文件或者修改文件时间戳
+history   -c  （清空所有）  -d 行号  查看历史记录
+diff      比较文件内容差别  （compare file line by line）
+vimdiff    edit two,three or four versions of a file with Vim and show differences
+useradd    添加用户
+passwd     --stdin 修改用户密码。如果不指定用户则修改当前用户密码，普通用户只能改自己的密码
+whoami    查看当前命令行终端用户
+w   -   show who is logged  on and what they are doing
+su       切换用户角色,农民起义，推翻皇帝，注意要带上 -
+sudo      让普通用户可以拥有指定用户一般来讲是root的权限的命令
+yum   is  an  interactive  ,rpm based,package manager  包管理工具，解决rpm包的依赖
+rpm    -ivh   软件安装命令 rpm -ivh 包名.rpm
+chkconfig   查看设置开机自动软件的命令
+netstat     查看网络状态lntup或an
+[--tcp |-t]   [--udp| -u]  [--listening| -l] [--all| -a]  [--numeric| -n]
+[--program | -p]
+lsof  -i  :port  查看端口
+chattr     change  file  attributes(-i +i)
+lsattr      list file  attributes
+hostname    查看主机名（uname -n）
+uname       打印系统信息 -r内核 -m 32or64bit -n主机名 -a所有
+su         用户角色切换 su - 用户名 -参数切换用户环境变量
+           从普通用户到root，需要输入root密码，从root到普通用户无需密码
+getenforce  检查selinux状态
+setenforce  设置SELINUX状态。1启用，0警告、不启用
+getenforce   检查selinux状态
+setenforce   设置selinux状态，1启用，0警告、不启用
+runlevel     查看当前系统运行级别
+init         切换运行级别，后面接对应级别的数字
+init 5       ==startx 切换桌面环境，需要桌面软件包
+chkconfig    设定开机自启动服务
+diff         比较接两个文件
+vimdiff      高级比较，高亮显示两个文件内容区别
+which       查找命令所在的路径，搜索范围来自全局环境PATH变量对应的路径
+history     显示历史记录，-c清除所有记录，-d清除指定记录
+whereis    查找相关信息-b查二进制命令
+locate    从数据库里查相关信息，新命令需提前updatedb更新数据
+ulimit     -SHn   -a   Modify shell resource limits
+wget      下载  wget  http://url
+wget  -O  /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-6.repo 下载到指定路径并改名
+         --spider 爬虫，检查网站是不是好的，不会下载只是检查
+	 -T 
+	 --timeout=seconds  超时时间
+         --tries=2 指定重试的次数
+         --quiet   关闭输出
+
+visudo  编辑sudo配置文件（vi /etc/sudoers） -c 检查语法
+sudo   调兵虎符，sudo配置文件授权后，执行命令时候需要命令前带sudo
+less   按屏（空格，page up/down）或按行（回车）查看文件
+more   按屏（空格）或按行（回车）查看文件（不能向上翻）
+ifup    启动网卡
+ifdown   停止网卡
+df -h    以人类可读的信息查看磁盘挂载信息，-i查看挂载的磁盘inode使用情况
+fsck   -A  磁盘检查（不要检查好磁盘），卸载的状态下检查
+dmesg     内核打印的错误信息，例如硬件故障警告
+tar      打包
+gzip  unzip  zip  压缩解压缩
+cut       切割，简单的取列命令 -d 指定分隔符 -f 数字取第几列-f3,6 -c 按字符取
+wc      打印行号，字节数等 -l行数（企业案例多）
+#netstat -lntup|grep ssh|wc -l
+  2 #只要有大于1个就是好的
+  #ps -ef|grep '/usr/sbin/sshd'|grep -v grep|wc -l
+  1 #只要有一个就代表进程是活的 
+  #有关wc这里有个有关工作实战生产的案例http://oldboy.blog.51cto.com/2561410/577227
+ echo   参数  -n 实现内容在同一行输出
+                  -e  识别转义字符 \t tab \n 回车 \b 退格
+
+date 
+  #date +%F #简写
+  2015-05-29
+  #date +%y-%m-%d #短格式
+  15-05-29
+  #date +%Y-%m-%d #长格式
+  2015-05-29
+  #date +%w #星期几
+  2
+  #date +%F -d "-1day" #显示时间比实际少一天
+  #date +%F-%H -d "-1hour" #显示时间比实际少一小时
+  #tar zcvf etc-$(date +%F).tar.gz /etc
+dump2fs - dump ext2/ext3/ext4 filesystem status
+stat - display file or file system status
+chmod = change mode 改变文件权限
+
+
+
+基础正则表达式：一些特殊的符号表示一些特殊的作用和功能
+定义好的
+. 单个任意字符
+* 重复前面任意0个或多个字符
+.* 匹配任意字符
+sed -i 's#(可以用正则匹配)#\1#g' oldboy.txt
+把前面正则匹配的括号内的结果，在后面用\1取出来操作
+
+环境变量
+PATH  系统路径变量，执行ls,cp命令等非内置命令时，系统会首先查找PATH里对应的路径是否有，如果没有就报告找不到该命令
+当执行which cp 来查看命令所在路径的时候，也是从PATH变量去搜索
+临时修改#export PATH="$PATH:/tmp"，永久修改前面临时修改的命令放到/etc/profile下，使用source /etc/profile使得修改立即生效
+
+时间同步
+#ntpdate time.nist.gov #同步互联网时间
+#echo "*/5 * * * * /usr/sbin/ntpdate time.nist.gov >/dev/null 2>&1" >>/var/spool/cron/root #每隔5分钟同步时间
+#crontab -l
+
+登录超时
+#export TMOUT=300 #生产环境5分钟较合理
+历史记录数
+#export  HISTSIZE=5
+#history
+#cat ~/.bash_history 
+#export HISTFILESIZE=5 #历史记录文件也调小
+永久生效
+#echo 'TMOUT=300' >>/etc/profile
+#echo 'HISTSIZE=5' >>/etc/profile
+#echo 'HISTFILESIZE=5' >>/etc/profile
+#source /etc/profile #使得配置文件生效
+清历史记录
+#echo 123456|passwd --stdin oldboy
+#history -c #清除所有记录
+#history #查看历史记录
+#history -d 行号 #清除指定记录
+#help history #history是系统命令，用help
+
+符号：
+;多个命令的分隔符
+/ 根或者路径的分隔符
+>或者1> 标准输出重定向（数据流朝着箭头的方向流动），覆盖原来的文件
+>>或者1>> 追加重定向 （数据流朝着箭头的方向流动），再原来的文件的结尾追加内容
+<或者<0 标准输入重定向：输入重定向用于改变命令的输入，指定输入内容，后跟文件名
+<<或者<<0 输入重定向：后跟字符串，用来表示输入结束，也可以用ctrl+d来结束输入
+2>或2>>   标准错误输出
+下面3种方法是等价的
+/dev/null 空设备 黑洞
+1.1>/dev/null 2>/dev/null
+2.1>/dev/null 2>&1
+3.&>/dev/null
+
+.. 上一级目录
+.  当前目录
+~  用户的家目录
+|  管道 通过管道把前一个命令的输出交给后一个命令继续处理
+{} 配合echo打印序列 echo {1..6}
+PATH 环境变量大写，所有包含在环境变量里面的路径，都可以直接敲出来执行
+     全局生效/etc/profile 普通用户生效~/.bash_profile或者~/.bashrc
+修改全局变量#export PATH="$PATH:/tmp"
+
+我去面试：
+$<==普通用户对应的提示符
+[root@www ~]#<==超级管理员root对应的提示符
+提示符@前面的字符代表当前用户（whoami），后面的为主机名（hostname），~当前用户所在的路径
+
+
+
+#支持中文显示
+#cat /etc/sysconfig/i18n 
+LANG="en_US.UTF-8"
+#cp /etc/sysconfig/i18n /etc/sysconfig/i18n.bak #先备份
+#sed -i 's#LANG="en_US.UTF-8"#LANG="zh_CN.UTF-8"#g' /etc/sysconfig/i18n
+#source /etc/sysconfig/i18n #让其生效
+#CRT也要改，选项--会话选项--外观--字符编码--UTF-8
+
+rm一记
+#myrm(){D=/tmp/$(date + %Y%m%d%H%M%S);mkdir -p $D;mv "$@" $D && echo "moved to $D ok";}
+#alias rm='myrm'
+#rm data/
+moved to /tmp/20161112201111 ok
+
+加大服务器文件描述符
+文件描述符是由无符号整数表示的句柄，进程使用它来标识打开的文件

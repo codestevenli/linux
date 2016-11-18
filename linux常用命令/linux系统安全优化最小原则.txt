@@ -1,0 +1,148 @@
+
+         linux家安全
+           |-----|
+           |home |
+内部通道<-- |-----|----->对外只开放80web端口
+内网ip
+port:52113
+username
+passwd
+
+
+
+windows服务器默认的远程管理端口是3389，linux是22
+管理员administrator，普通用户guest
+     root            /etc/passwd里面除了root以外都是普通用户
+
+linux优化;
+1.建立普通账号，使用普通用户登录
+2.处理SELINUX
+3.处理防火墙
+4.精简开机自启动服务。sshd,network,crond,rsyslog,sysstat
+5.linux最小化安全理念5条
+
+/etc/ssh/sshd_config  sshd服务端配置文件
+cp sshd_config sshd_config.bak.161109 #修改前先备份
+vim sshd_config
+####复制以下几行到文件中####
+Port 52113 #13行去# ，修改52113
+UseDNS no #122行去#，yes改no用ip链接较快
+PermitRootLogin no #42行去#，yes改no，不允许root远程链接
+ListenAddress 192.168.36.129:52113 #企业仅指定监听本机内网ip地址,改成服务器内网卡（eth1）上绑定的IP地址，vpn方式进入网络，局域网链接服务器
+GSSAPIAuthentication no #解决两个机器之间连接慢的问题
+PermitEmptyPasswords no
+####以上####
+diff sshd_config.bak.161109 sshd_config #比较两文件差异
+vimdiff sshd_config.bak.161109 sshd_config #高亮显示比较两文件差异
+/etc/init.d/sshd restart #重启服务
+
+几层防御
+vpn（lan）账号密码
+ |
+ 进局域网的门，找ip，port，除非挨个问（扫描），但问你你不说话（禁ping）
+ 破解root也不行
+ 找贝壳容易，找一个刻着sb的贝壳难
+
+ netstat -lntup|grep sshd #查看合法的监听ip:port
+
+
+给用户分配任务（给你做宰相不给做皇帝）sudo
+#visudo #==vi /etc/sudoers
+:set nu #显示行号
+98gg #跳到98行
+93： syntax（语法）：
+        user  MACHINE=COMMANDS
+	|             |                      |
+管理的用户  你希望用户管理的机器   你希望用户拥有哪些权限，权限是以命令为单位的
+（）表示你允许用户以哪个用户的权限去做事情，一般来讲都是普通用户想要root权限
+光标在98行命令行模式yy复制，p粘贴
+第一个更改root为用户，第三个修改命令，用全路径，不清楚用which+命令查一下
+多个用','隔开，/bin/touch,/usr/sbin/useradd
+NOPASSWD:ALL #用sudo不用密码
+
+
+ 关闭selinux功能
+ selinux（security-enhanced linux）是美国国家安全局（nsa）对于强制访问
+ 控制的实现，这个功能让系统管理员又爱又恨，这里考虑还是把它给关闭了，至于安全问题，
+ 后面通过其他手段来解决
+关闭方式如下：
+1、修改配置文件，使关闭selinux永久生效
+#sed -i 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
+修改配置文件可使配置永久生效，但必须重启系统，此步是快速修改方法，也可以通过vi编辑修改此文件
+#grep SELINUX=disabled /etc/selinux/config #检查
+SELINUX=disabled <==检查替换结果为disabled就表示编辑成功了
+2.临时关闭SELINUX，可在命令行执行如下命令：
+#setenforce
+usage : setenforce [Enforcing| Permissive | 1| 0] #两个选项，1开启，0关闭
+#setenforce 0 #关闭
+
+SELINUX=can take one of these three values:
+    enforcing - 开SELinux security policy is enforced
+    permissive - 警告但不阻止
+    disabled   - 完全阻止
+
+设定运行级别为3（文本模式）
+设定runlevel为3，即表示使用文本命令行模式管理linux，检查命令如下
+#grep 3:initdefault /etc/inittab
+id:3:initdefault: <==这里的3就是linux默认的运行级别，如果有需求可以将其修改为其他级别，工作中常用3级别，即文本模式
+#runlevel  <==查看当前系统运行级别
+N 3 #输出前一个和当前的级别
+#init 5 <==   切换运行级别为5，只有在有桌面程序时才可以执行startx命令切换
+
+运行级别
+#tail /etc/inittab
+0- halt 关机
+1 - 单用户模式，root找回密码
+2 - 多用户模式没有NFS(如果你没有网络的话和3是一样的)
+3 - 完全的多用户模式（文本模式）
+4 - 没用
+5 - 桌面模式（初学者）
+6  - 重启
+
+精简开机系统启动
+和windows系统一样，在linux服务器运行的过程中，也会有很多无用的软件服务默认就在运行，
+这些服务占用了很多系统资源，而且也带来了安全隐患，因此要关闭掉，
+1.重要的开机自启动服务
+有5个;
+1.sshd
+远程连接linux服务器时需要用到这个服务程序，所以必须要开启，否则将无法远程连接linux服务器
+2. rsyslog
+是操作系统提供的一种机制，系统的守护程序通常会使用rsyslog将各种信息保存到系统日志文件中，centos6以前此服务的名字为syslog
+系统出错打消息到/var/log/messages或硬件发生故障用#dmesg  查看
+3.network
+系统启动时，若想激活/关闭各个网络接口，则应（必须）考虑开启
+4.crond
+该服务用于周期性地执行系统及用户配置的任务计划，有要周期性执行的任务要开启，此服务几乎是生产场景必须要用的一个软件
+5.sysstat
+sysstat是一个软件包，包含监测系统性能及效率的一组工具，这些工具对于分析系统性能数据很有帮助，比如cpu使用率、硬盘和网络吞吐数据等，
+这些数据的分析有利于判断系统运行是否正常，所以他是提高系统运行效率、安全运行服务的助手
+sysstat软件包集成的主要工具是：
+iostat工具提供cpu使用率及硬盘吞吐效率的数据
+mpstat工具提供与单个或多个处理器相关的数据
+sar工具负责收集、报告并存储系统活跃的信息
+
+#chkconfig --list #能看到每一个开机自启服务在7个运行级别中是开是关
+#chkconfig --list |grep 3:on 
+#chkconfig --level 3 atd off #atd服务运行级别3开机自启动关闭
+#chkconfig --list atd
+
+#for name in `chkconfig --list|grep 3:on|awk '{print $1}' |grep -Ev "sshd|network|rsyslog|crond|sysstat"`;do chkconfig $name off;done #保留5个必要的，其他off，-E操作多个字符，-v排除，命令用反引号``，
+#不需要for循环
+#chkconfig --list|grep 3:on|awk '{print $1}' |grep -Ev "sshd|network|rsyslog|crond|sysstat"|sed -r 's#(.*)#chkconfig \1 off#g'|bash  #-r不用转义，\ 取括号内容
+
+关闭防火墙
+#iptables -L -n #查看当前防火墙
+#/etc/init.d/iptables stop  #关闭
+#/etc/init.d/iptables status  #查看是否关闭
+
+linux系统安全最小原则说明
+最小化原则对linux系统安全来说极其重要：即多一事不如少一事，
+具体包括几个方面：
+安装linux系统最小化，即选包最小化，yum安装软件包也要最小化，
+开机自启动服务最小化，即不用的服务不开启
+操作命令最小化，例如：rm -f t.txt 而不用rm -fr t.txt
+登录linux用户最小化，平时没有需求不用root登录，用普通用户登录
+普通用户授权权限最小化，即只给必须的管理系统的命令
+linux系统文件及目录的权限设置最小化，禁止随意创建、更改、删除文件
+
+

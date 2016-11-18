@@ -1,0 +1,135 @@
+总结：linux普通文件的读写执行权限说明
+可读r：表示具有读取\阅读文件内容的权限
+可写w：表示具有新增、修改文件内容的权限（如果没有r，那么vi无法编辑，强制编辑的话会覆盖数据，echo可以追加）
+（特别提示：删除文件（修改文件名等）的权限是受父目录的写权限控制，和文件本身无关）
+可执行x：表示具有执行文件的权限（1.文件本身要能执行，2.普通用户同时还需要具备r的权限才能3.root都可执行）
+win32下可执行文件：*.exe,*.bat,*.com
+linux下可执行文件：*.sh,*.py,*.perl等
+
+chmod
+chown
+
+cd 目录 -与父目录执行权限有关
+ls -l 文件 -与父目录读权限有关，没执行权限看不全
+rm -f 文件 ，mv a b，touch 文件 -与父目录写权限有关
+
+r read 可读权限 对应数字4
+w write 可写权限 对应数字2
+x execute 执行权限 对应数字1
+- 没有任何权限 对应数字0
+
+文件属主/用户（owner/user）：读read，写write，执行x
+文件用户组（group）：读r，写w，执行x
+其他用户（other）：读r，写w，执行x
+如果权限位不可读，不可写，不可执行，则用-来表示
+
+后面还会有特殊的权限位：t T s S X +
+
+演示环境：
+groupadd incahome 一个家庭
+useradd oldboy -g incahome 主人
+useradd oldgirl -g incahome 家庭成员
+useradd test 外面的人
+id oldboy
+id oldgirl
+一个家庭（用户组）incahome：成员有oldboy，oldgirl
+删除成员userdel -r
+
+chmod 数字权限方法
+方法一：使用数字权限设置权限的命令格式如下
+chmod [数字组合] 文件名
+chmod 的数字语法简单直观
+chmod 的数字方法的说明：
+r 4
+w 2
+x 1
+- 0
+rwxr-xr-x 755
+
+chmod 字符式权限表示法
+使用权限字符设置权限的命令格式如下
+chmod [用户类型] [+|-|=] [权限字符] 文件名
+用户类型
+u（user）
+g（group）
+o（others）
+a（all）
+
+操作字符
++（加入） 添加某个权限
+-  （减去）取消某个权限
+=（设置） 取消其他所有权限赋予给定的权限
+权限字符 rwx-
+
+
+例：
+rw-rw-r-x ==> rwx--xr-x
+chmod u+x,g=x test.sh
+用字符式语法比较灵活，组合起来方便
+比如
+u=r+x 为文件属主添加读写权限
+ug=rwx,o=r 为属主和属组添加读写执行权限，为其他用户设置读权限
+a+x 为文件的属主属组和其它用户添加执行权限
+g=u 让文件的属组有跟属主一样的权限
+
+对于目录权限的设置，要用到-R参数
+和数字权限方法一样，如果我们为一个目录及其下的子目录和文件具有相同的属性
+#chmod -R a+rwx ett_dir/
+
+生产案例:
+防止木马入侵
+文件和目录给什么权限，安全临界点
+目录d 755 root root
+文件f  644 root  root
+
+站点目录的文件和目录给什么权限
+对于用户上传的图片目录777
+
+默认权限分配的命令umask
+http://oldboy.blog.51cto.com/2561410/1060032
+#umask
+0022
+#sed -n '65,69p' /etc/bashrc
+ if [ $UID -gt 199] && [ "`id -gn`" = "`id -un`"]; then #用户uid大于199，且用户的组和用户id相同为002
+     umask 002
+ else
+     umask 022
+ fi
+
+ 永久修改umask值：C6.5
+ #sed -n '51,55p' /etc/profile
+if [ $UID -gt 199] && [ "`id -gn`" = "`id -un`"]; then #用户uid大于199，且用户的组和用户id相同为002
+     umask 002
+ else
+     umask 022
+ fi
+ 注意：普通用户的umask未必是002，除非满足下面的条件
+ 前面oldboy用户 属于incahome组的时候
+ umask 也是022
+
+文件权限计算小结
+
+创建文件默认的最大权限是666，默认创建的文件一般没有可执行权限
+对于文件来说，umask的设置是在假定文件拥有八进制666的权限上进行的，文件的权限等于666减去umask的掩码数值
+重点在接下来的内容，如果umask的部分位或全部位为奇数，那么真正的文件权限位计算结果分别再加1才是最终文件权限
+
+创建目录默认最大权限777，默认创建的目录属主是有x权限的
+对于目录来说，umask的设置是假定文件拥有八进制777权限上进行，目录八进制权限
+
+特殊权限位：
+普通用户通过passwd修改自己的密码
+-r-------- root root /etc/shadow 普通用户没有权限修改
+#看一下/etc/passwd
+#ls -l /usr/bin/passwd
+-rwsr-xr-x root root /usr/bin/passwd
+命令文件被设置了suid
+
+#chmod 4755 /bin/rm
+-rwsr-xr-x root root /bin/rm #S+x=s
+#chmod -x /bin/rm
+#ls -l /bin/rm
+-rwSr-xr-- root root /bin/rm 
+
+危险没有权限也能删除
+
+

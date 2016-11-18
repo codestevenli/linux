@@ -1,0 +1,74 @@
+容易混淆的两个注意事项：
+a.正则表达式应用非常广泛，存在于各种语言中，例如：php，Python，java等
+但是我们今天讲的linux系统运维工作中的正则表达式，即linux正则表达式，
+最常应用正则表达式的命令是grep（egrep），sed，awk，换句话说linux三剑客要想能工作
+的更高效，那一定离不开正则表达式的配合
+b.正则表达式和我们常用的通配符特殊字符是有本质区别的，这一点要注意
+通配符例子：ls *.log 这里*是通配符（表示所有），不是正则表达式
+注意事项：
+a.linux正则一般以行为单位匹配处理的
+b.alias grep='grep --color=auto',加颜色，能看出匹配内容的颜色
+c.注意字符集，export LC_ALL=C
+
+正则表达式实际就是一些特殊字符，赋予了它特定的含义
+1.^word 搜索以word开头的，vi ^ 一行的开头
+2.word$ 搜索以word结尾的，vi $ 一行的结尾
+3.^$ 表示空行
+4. .   代表且只能代表任意一个字符
+5. \  例\.只代表点本身，转义符号，让有着特殊身份意义的字符，脱掉马甲，还原原型
+6. *  例o* 重复0个或多个前面的一个字符
+7. .*  匹配所有字符，^.*以任意多个字符开头
+8. [abc] 匹配字符集合内的任意一个字符
+9.[^abc] 匹配不包含^后的任意字符的内容
+10.a\{n,m\} 重复n到m次，前一个重复的字符，如果用egrep可以去掉斜线
+11.man grep 可以查找上述内容帮助
+12.参考资料
+http://deerchao.net/tutorials/regex/regex.html
+http://aresxin.blog.51cto.com/4734097/1602624
+
+扩展的正则表达式
+1.+ 重复一个或一个以上前面的字符
+2.？ 重复0个或一个0前面的字符
+3.|  用或的方式查找多个符合的字符串
+4.() 找出“用户组”字符串
+
+三剑客举例：
+#ifconfig eth0|awk '/^.*addr 00.*$/' 
+eth0   Link encap:Ethernet  HWaddr 00:0C:29:43:44:7A
+#ifconfig eth0|grep '^.*addr 00.*$'
+eth0   Link encap:Ethernet  HWaddr 00:0C:29:43:44:7A
+#把空行去掉
+#grep -v "^$" oldboy.log
+#匹配3个0
+#grep "0\{3\}" oldboy.log
+#grep -E 或egrep不用转义
+#grep -E "0{3}" oldboy.log
+#匹配3到5个0
+#grep -E "0{3,5}" oldboy.log
+
++表示重复“一个或一个以上”前面的字符（*是0或多个）
+#grep -Eo "go+d" oldboy.log
+good
+god
+goood
+
+一例：
+#匹配出ip地址
+#ifconfig eth0|sed -n '2p'
+   inet addr:192.168.36.129  Bcast:192.168.36.255
+#ifconfig eth0|sed -n '2p'|sed -r 's#.*addr:##g'
+192.168.36.129  Bcast:192.168.36.255
+#ifconfig eth0|sed -n '2p'|sed -r 's#.*addr:##g'|sed -r 's# Bc.*$##g'
+192.168.36.129
+
+
+2.？ 重复0个或一个0前面的字符
+#有d且有0或一个g
+#grep -Eo "g?d" oldboy.log
+d
+d
+gd
+#g开头d结尾且有0或一个o
+#grep -Eo "go?d" oldboy.log
+god
+gd

@@ -1,0 +1,167 @@
+/etc/sysconfig/network-scripts/ifcfg-eth0
+配置网络地址及GW等 
+1.重启网卡#/etc/init.d/network restart #<==ONBOOT=yes 开机网卡起来
+2.ifdown eth0 && ifup eth0 只针对eth0网卡 关闭和启动网卡
+通过setup-->"network configuration"修改网卡配置就是这个文件
+
+#cat /etc/sysconfig/network-scripts/ifcfg-eth1
+DEVICE=eth1  #<==物理设备名，eth1表示第二块网卡
+HWADDR=00:0c:29:ba:8e:8f   #<==网卡的MAC地址，48位
+TYPE=Ethernet  #<== 以太网
+UUID
+ONBOOT=yes #<== 控制网卡是不是开机启动
+NM_CONTROLLED=yes
+BOOTPROTO=none #<==其中，proto取下列值之一：none，引导时不使用协议；static静态分配地址；bootp使用BOOTP协议；或dhcp，使用dhcp协议
+IPADDR=10.0.0.7 #<==addr是ip地址
+NETMASK=255.255.255.0 #<==子网掩码，划分网络位和主机位
+DNS2=202.106.0.20 #<==DNS把baidu.com变成baidu服务器ip，DNS就是域名和ip的解析工具
+GATEWAY=10.0.0.254 #<==网关地址，路由器地址
+DNS1=8.8.8.8
+USERCTL=no
+
+/etc/resolv.conf
+设置linux本地的客户端DNS的配置文件
+可以实现域名和ip的互相解析
+setup->"network configuration "->"DNS configuration"
+nameserver 8.8.8.8
+nameserver 202.106.0.20
+不要在网卡配置文件里配置DNS，而是在/etc/resolv.conf
+小结：
+1.客户端DNS可以在网卡配置文件里设置
+2.客户端DNS也可以在/etc/resolv.conf里设置
+3、网卡里的设置DNS优先于/etc/resolv.conf
+
+/etc/hosts :局域网 主机名和ip解析，相当于DNS工具（手动维护的）
+设定用户ip与名字（或域名）的对应解析表，相当于本地LAN局域网内的DNS
+对应Windows的C:\WINDOWS\system32\drivers\etc\hosts,LAN内ip域名解析文件
+hosts在企业里的作用
+开发、测试时做临时的域名解析常用英文hosts-The static table lookup for host names
+host 的解析在机房的服务器互相调用中也会常用，方便迁移，如门户网站的解析真实案例：
+主机名要规范
+taobao:
+172.38.18.23  realtime-search.config-vip.taobao.com
+172.65.54.47  tpbk2configslave1.config-host.taobao.com
+
+#vi /etc/hosts
+#tail -1 /etc/hosts
+192.168.36.129 oldboy
+#ping oldboy
+
+/etc/sysconfig/network
+可修改机器名及网卡启动，网关等配置
+更改主机名：
+1.vi /etc/sysconfig/network
+2.hostname 主机名 #临时生效
+同时修改，不用重启就生效了
+
+/etc/fstab
+fstab   -  static information about the filesystems
+设置文件系统挂载信息的文件，使得开机能够自动挂载磁盘分区
+记录开机要挂载的文件系统的一个文件
+fstab一旦配置错误，会导致服务器无法启动
+#df -h <==以人类可读的信息查看磁盘挂载信息
+第三列是文件系统，重要常用的ext3,xfs,tmpfs（临时文件系统）,reiserfs（用于小文件，效率高）,ext2,ext4,ntfs,proc（虚拟文件系统）
+#mount -t ext4 -o noexec /dev/sda1 /mnt #-t文件系统类型 -o选项noexec不让里面的文件执行 
+                |            |            |          |
+	列	3            4           1         2
+第五列要不要自动备份，0值不备份
+第六列文件系统出问题了重启时系统要不要帮你做检查扫磁盘。
+   0值不扫描，自己的添加的设备全0，系统的根分区置1， / 给1，/boot 给2
+测试手动挂载：
+创建一个虚拟的块设备
+#dd if=/dev/zero of=/dev/sdb1 bs=4096 count=100 #生成一个文件系统
+#ll /dev/sdb1
+#mkfs.ext4 /dev/sdb1 #格式化
+挂载：
+1.命令手动
+#mount -t ext4 -o loop,noatime,noexec /dev/sdb1 /mnt
+#df -h #查看挂载结果
+#cd /mnt
+#umount /mnt #卸载
+2.vi /etc/fstab
+   挂载的设备       挂载点         FS类型         参数                         备份   检查
+加/dev/sdb1       /mnt          ext4        loop,noatime,noexec       0      0
+#mount -a 
+
+#blkid
+第一列挂载的设备，可以是设备名或UUID，或磁盘标签
+
+fstab：
+出问题：修复
+1.开机提示，输入密码 修复
+2.救援模式，rescue
+修改/etc/fstab只读状态，mount -o rw,remount /
+
+/etc/rc.local
+用于存放开机自启动程序命令的文件
+让一个程序开机启动：
+1.chkconfig（/etc/init.d/sshd）
+2.放入/etc/rc.local
+
+选择建议：/etc/rc.local
+我们把/etc/rc.local作为服务器档案文件
+
+所有程序开机启动放入/etc/rc.local,注释掉就可以了
+
+mount挂载：和fstab问题
+NFS网络文件系统挂载时，网卡还没起，就已经加载fstab了
+mount -t nfs 10.0.0.7:/data /mnt
+只能放在rc.local里，因为fstab启动比网络要早
+
+/etc/inittab
+设定系统启动时init进程将把系统设置成什么样的runlevel运行级别
+及加载相关的级别对应启动文件设置，linux开机启动流程
+1.开机自检，加载BIOS
+2.读取MBR
+3.Boot Loader
+4.加载kernel内核
+5.init进程依据inittab文件来设定运行级别
+6.init进程执行rc.sysinit（初始化脚本）
+7.启动内核模块
+8.执行不同运行级别的脚本程序（若级别3，执行/etc/rc.d/rc3.d/脚本）
+9.执行/etc/rc.d/rc.local
+10.执行/bin/login程序，启动mingetty,进入登录状态
+
+/etc/init.d
+这个目录是用来存放系统或服务器
+
+/etc/profile
+系统全局环境变量永久生效的配置文件
+目录/etc/profile.d/把脚本放里面登录时就会执行
+#vi oldboy.sh
+echo "linux"
+#chmod +x oldboy.sh
+
+/etc/profile.d  登录后执行的脚本所在地
+/etc/motd  登录后显示的字符串
+
+/etc/group
+设定用户的组名与相关信息
+
+/etc/passwd
+账号信息文件
+
+/etc/shadow
+密码信息文件
+
+/etc/gshadow
+组密码信息文件
+
+/etc/sudoers
+可以执行使用sudo命令的配置文件
+
+/etc/securetty
+设定哪些终端可以让root登录
+
+/etc/login.defs
+所有用户登录时的缺省配置
+
+/etc/modprobe.conf
+内核模块额外参数设定
+
+/etc/syslog.conf
+日志设置文件限C5.X
+
+/etc/rsyslog.conf
+日志设置文件限C6.X
+

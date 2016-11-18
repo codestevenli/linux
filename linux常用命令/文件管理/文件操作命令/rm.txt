@@ -1,0 +1,43 @@
+1.30        rm
+1.30.1 功能说明
+删除文件或目录。
+1.30.2 语法
+rm [-dfirv][--help][--version][文件或目录...]
+1.30.3 补充说明
+执行rm指令可删除文件或目录，如欲删除目录必须加上参数"-r"，否则预设仅会删除文件。
+1.30.4 参数
+　-d或--directory 　直接把欲删除的目录的硬连接数据删成0，删除该目录。
+　-f或--force 　强制删除文件或目录。
+　-i或--interactive 　删除既有文件或目录之前先询问用户。
+　-r或-R或--recursive 　递归处理，将指定目录下的所有文件及子目录一并处理。
+　-v或--verbose 　显示指令执行过程。
+　--help 　在线帮助。
+　--version 　显示版本信息。
+
+$ rm homework
+rm:无法删除目录
+$ rm -r homework   #-r 递归 ，-f 强制 ，-i 先询问
+rm:是否删除目录 “homework” ? y
+$ rm -rf * #强制删除当前目录下的所有文件及目录，慎用
+
+文件一旦通过rm命令删除则无法恢复，要小心使用该命令
+可以用alias别名使rm失效
+或者用mv替代rm
+方法如下
+在~下的.bashrc或者.bash_profile中加入以下几行
+mkdir -p ~/.trash  #.trash相当于回收站，相当于mv到这了
+alias rm=trash
+alias r=trash
+alias rl='ls ~/.trash'
+alias ur=undelfile
+undelfile()
+{
+  mv -i ~/.trash/$@ ./
+}
+trash()
+{
+  mv $@ ~/.trash/  #.trash相当于回收站，相当于mv到这了
+}
+
+可以恢复回去
+ur filename

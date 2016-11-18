@@ -1,0 +1,168 @@
+ls -lhi
+i ==》 索引节点inode，
+inode概述
+硬盘要分区，然后格式化，创建文件系统
+inode，index node，在每个linux存储设备或存储设备的分区被格式化为ext4文件系统后，一般都有两部分，第一部分是inode（很多个），第二部分是block（很多个）
+block是用来存储实际数据用的，例如，照片视频等普通文件数据
+而inode就是用来存储这些数据属性信息的（也就是ls -l的结果），inode包含的属性信息包括文件大小，属主，归属的用户组，读写权限，文件类型，修改时间，还包含指向文件实体的指针功能
+（inode节点--block的对应关系）等，但是inode唯独不包括文件名
+inode除了记录文件属性的信息外，还会为每个文件进行信息索引，所以就有了inode的数值
+整本书相当于一块磁盘或分区，首页的目录索引相当于inode，每一页相当于一个block
+文件唯一标识，读文件每个文件的身份证号数字
+h ==>  人类可读方式
+25551 -rw-r--r--.   1  root root  0   5月  15 2015 老男孩.txt
+第一列：inode（index node ）索引节点编号，他是文件或目录在磁盘里的唯一标识，
+linux读取文件首先要读取到这个索引节点，相当于书的目录
+第二列：
+第一个字符，文件类型，-普通文件 d目录 （windows扩展名.jpg .avi）
+第二到10个字符rw-r--r--   文件权限 （r-read,w-write,x执行 -）
+第11个字符 .  SELINUX相关
+第三列：文件的硬链接数，硬链接是除文件本身外有几个入口
+第四列：文件对应的属主或者用户
+第五列：文件对应的属组或用户组
+
+因为inode要存放文件的属性信息，所以inode是由大小的，centos5 inode的默认大小是128字节，
+而centos6 inode的默认大小是256字节，inode的大小在文件系统被格式化之后就无法更改了，
+格式化前可以指定inode大小，但一般工作环境没这个需求
+#dump2fs /dev/sda3|grep -i "Inode size"
+Inode size :    256
+#dump2fs /dev/sda1|grep -i "Inode size" #<==/boot/分区默认128
+Inode size:128
+#dump2fs /dev/sda1|less
+Inode count:  51200  #分配了多少个inode
+Block count:  204800  #分配了多少个块
+Reserved count : 10240 #多少是保留块
+Free blocks  :  166676  #剩余多少块
+Free inodes：  51162  #剩余多少inode
+
+#df -i
+Filesystem    Inodes IUsed  IFree        IUse
+             inode总量   使用了多少 剩余多少  使用的百分比
+
+小结：
+1.磁盘分区格式化ext4文件系统后会生成一定数量的inode和block
+2.inode是索引节点，作用是存放文件的属性信息以及作为文件的索引（指向文件的实体block）
+3.ext3/ext4文件系统的block存放的是文件的实际内容
+4.inode是一块存储空间，C6非启动分区inode默认大小256字节，C5是128字节
+5.inode是一串数字，不同的文件对应的inode（一串数字）在文件系统里是唯一的
+6.inode相同的文件，互为硬链接文件
+7.一个文件被创建后至少要占用一个inode和一个block
+8.block的大小一般有1k,2k,4k,几种，其中引导分区等为1k，其他普通分区为4k（C6）
+#dump2fs /dev/sda1|grep -i "block size"
+Block size:     1024  #/boot分区1k
+#dump2fs /dev/sda3|grep -i "bloack size"
+Block size:       4096  #/分区4k
+9.如果一个文件很大，可能占多个block，如果文件很小，至少占一个，并且剩余空间浪费了
+10.inode大小和总量查看
+#dump2fs /etc/sda3|egrep -i "block size|inode size"
+#dump2fs /etc/sda3|egrep -i "block count|inode count"
+11.查看inode的总量和使用量命令df -i
+12.如何生成及指定inode大小mkfs.ext4 -b 2048 -l 256 /dev/sdb
+
+有关block的知识：
+1.磁盘读取数据是按block为单位读取的
+2.一个文件可能占用多个block，每读取一个block就就会消耗一次磁盘I/O
+3.如果要提升磁盘IO性能，那么就要尽可能一次性读取数据尽可能的多
+4.一个block只能存放一个文件内容，无论内容有多小，如果block 4K，那么存放1k的文件，剩余3k就浪费了
+5.block并非越大越好，block太大对于小文件存放就会浪费磁盘空间，例如
+1000k文件，block为4k，占用250个block，block为1k，占用1000个block
+访问效率谁更高，消耗io分别为250次和1000次
+6.大文件（大于16k）一般设置block大一点，小文件（小于1k）一般设置block小一点
+7.block太大例如4k，文件都是0.1k的，大量浪费磁盘空间
+8.block太小例如1k，文件都是1000k，消耗磁盘io
+9.block的设置也是格式化分区的时候，mkfs.ext4 -b 2048 -l 256 /dev/sdb
+10.文件较大时，block设置大一些会提升磁盘访问效率
+11.ext3/ext4文件一般设置为4k
+当前的生产环境一般设置为4k，特殊的业务，如视频可以加大block大小
+生产文件系统类型及block的大小选择http://blog.csdn.net/liuaigui/article/details/5521024
+企业面试题：
+一个100m（100，000k）的磁盘分区，分别写入1k的文件或写入1m的文件，分别可以写多少个
+错误解答：很容易计算1k的个数：100,000个，1m的个数100个
+假设B 4k ，写入1k文件数量
+    假设inode数量够多时候，就是block的数量，浪费3/4的容量
+    假设inode数量小于block的数量，就是inode的数量，浪费了3/4的容量
+假设B 4k，写入1m文件数量
+     硬盘空间多大，基本上就可以写入100个1m数量，一般情况inode和block都是做够
+下面知识点：
+a.上面考试题考察的是文件系统inode和block的知识
+b.inode是存放文件属性信息的（也包含指向文件实体的指针），默认大小128byte(c58),256byte(c64)
+c.block是存放文件实际内容的，默认大小1k（boot）或4k（非系统分区默认给4k）
+一般企业多用4k的block
+d.一个文件至少要占用一个inode及一个block
+e.默认较大分区常规企业真实场景情况下，inode数量是足够的，而block数量消耗的会更快
+
+http://www.eygle.com
+
+
+=======
+6.如果向磁盘写入数据提示如下错误：No space left on service ,通过df -h 查看磁盘空间发现没满，
+请问原因是什么
+解答：可能是inode数量被消耗尽了
+a.df -i 查看是否耗尽了inode数量
+b.企业工作中邮件临时队列/var/spool/clientmquene这里很容易被大量小文件占满导致No space left on device的错误
+clientmquene目录只有安装了sendmail服务才会有
+centos5.8默认就会安装sendmail，centos6.6默认没有sendemail
+
+==========
+windows图片文件扩展名：jpg,jpeg,png,bmp,gif等
+内容文件扩展名：doc,docx,txt,pdf
+视频avi,wmv,mp4,rmvb
+小结：
+1.windows里是通过扩展名来区分文件类型的
+2.linux里文件扩展名和文件类型没有关系
+3.为了容易区分和兼容用户使用windows的习惯，我们也会用扩展名标识文件类型
+oldboy.sh,oldboy.tar.gz
+
+linux文件扩展名举例：
+1.源码.tar .tar.gz tgz .zip .tar.bz 表示压缩文件
+2.sh表示shell脚本文件，通过shell语言开发的程序
+3.pl表示perl语言文件，通过Perl语言开发的程序
+4.py表示Python语言文件，通过Python语言开发的程序
+5.html .htm .php .jsp .do 表示网页语言文件
+6.conf 表示系统服务的配置文件
+7.rpm 表示rpm安装包文件
+
+运维开发语言：shell/python/php三者之一，至少会一个，最好会两个
+
+
+
+==========
+在linux系统中，可以说一切皆文件，文件类型包含有普通文件、目录、字符设备文件
+块设备文件、符号链接文件等等
+
+普通文件（regular file）：第一个属性为“-”，
+1.纯文本文件（ascll）：文件内容可以直接读到数据，例如：字母、数字
+2.二进制文件（binary）：linux当中可执行文件（命令）就是属于这种格式
+3.数据格式文件（data）：有些程序运行的过程中会读取某些特定格式的文件，例如：linux在用户登录时都会将登录的数据记录在/var/log/wtmp文件中，通过last命令读出来，cat命令会读出乱码 
+#file /bin/cat 
+     executable 可执行的二进制文件
+#file /etc/hosts
+/etc/hosts: ASCII text(纯文本文件)
+#file /var/log/wtmp
+/var/log/wtmp:data(数据文件)
+
+-type c 字符设备 ，对应于linux的一些设备例如串口设备，字符设备就是串行端口的接口设备，如猫等串口设备
+#find /dev -type c|xargs ls -l
+#字符设备创建
+#mknod oldboy c 5 1
+#普通文件创建
+#touch echo cat cp vi
+
+-type l 符号链接，就是软链接
+
+套接口文件：
+当我们启动mysql服务时，会产生一个mysql.sock文件，这个文件标识是s
+
+文件类型小结：
+1.-regular file 普通文件 *****
+    纯文本文件，二进制文件，数据文件
+2.d directory 目录 *****
+3.l link 符号链接或者软链接文件 ***
+     快捷方式，他指向文件的实体
+4.字符文件，块设备文件
+   c  character 串口设备，猫
+   b  block       硬盘，光驱 **
+5.sock进程之间通信会用到
+  s    sock
+6.管道文件
+   p

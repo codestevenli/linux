@@ -1,0 +1,218 @@
+1.如何过滤出已知当前目录下oldboy中的所有一级目录（提示：不包含oldboy目录下目录的子目录及隐藏目录，即只能是一级目录）
+ls -l结果中以d开头的就是目录
+#ls -l|grep "^d"
+#ls -lF|grep "/$"
+#find ./ -type d -maxdepth 1
+#tree -dL 1
+#ls -l|awk '/^d/'
+#ls -l|sed -n '/^d/p'
+
+2.假如当前目录是/oldboy
+cd /tmp
+希望快速返回上一次进入的目录，该如何做？
+#cd -
+#env|grep -i oldpwd
+
+3.一个目录中有很多文件，想最快速度看到最近更新的文件
+#ls -lrt /etc#执行这个命令后最新的文件会在最下面
+#mkdir /etc/nofinddir
+#ls -lrt /etc |tail -1
+让过滤的内容显示颜色
+#tail -1 /etc/profile
+alias grep='grep --color=auto'
+
+4.在配置apache时，执行了./configure --prefix=/application/apache2.2.17
+make install 完成后，希望用户的访问路径更简单，需要给/application/apache2.2.17
+一个软链接/application/apache,使得内部开发或管理人员通过/application/apache
+访问到apache的安装目录/application/apache2.2.17下的内容，
+#ln -s /application/apache2.2.17 /application/apache
+小结：linux下的软链接实际上非常类似windows下的快捷方式
+
+5.已知apache服务的访问日志按天记录在服务器本地目录/app/logs/
+现在要求只能保留最近7天访问日志如何解决
+提示：可以从apache服务配置上着手，也可以从生成出来的日志上着手
+apache日志测试数据
+for n in `seq 14`
+do
+  date -s "2015/01/$n"
+  touch access_www_`(data +%F)`.log
+done
+#find /oldboy/test/ -type f -name "access*.log" -mtime +7|xargs rm -f
+
+6.调试系统服务时，希望能实时查看系统日志/var/log/messages的变化
+法一：此法最常用
+tail -f /var/log/messages
+提示：对于没环境测试的同学可以开两个窗口，然后自己手动通过echo
+方式模拟messages多次更新测试（也可写脚本），然后另一个窗口tail -f
+
+7.打印配置文件nginx.conf内容的行号及内容，该如何做
+1.nl nginx.conf
+2.cat -n nginx.conf <==这个最常用
+3.less -N nginx.conf
+4.vi nginx.conf 然后执行:set nu :set nonu为取消行号
+5.grep -n . nginx.conf #<=对过滤的内容显示行号，想对所有内容，"."表示任意单个字符
+6.awk '{print NR $0}' nginx.conf #<==NR表示行号，$0表示整行
+7.sed '=' nginx.conf
+
+8.装完系统后，希望让网络文件共享服务NFS，仅在3级别上开机自启动
+chkconfig 管理脚本的要求：
+1./etc/init.d/sshd restart 格式正常服务
+2.脚本里增加如下
+#chkconfig : 35 56 24
+#description : oldboy linux test
+特别注意：
+/etc/init.d/oldboy start 只是决定这个脚本要不要开启，与chkconfig里的没关系
+
+方法一：全部关掉然后开启需要的级别的服务
+#chkconfig nfs off
+#默认2,3,4,5级别都是开启状态，所以需要先都关了，当然也可以chkconfig --level 245 off
+#chkconfig --list nfs #直接接服务名效率更佳
+#chkconfig --level 3 nfs on
+#chkconfig --list|grep nfs|grep -v nfslock#这个方法复杂，chkconfig --ist nfs更简单
+方法二：关掉不需要的级别，启用需要的级别
+#chkconfig --level 245 nfs off
+#chkconfig --level 3 nfs on
+#chkconfig --list nfs
+提示：
+1.操作完别忘了执行chkconfig --list nfs 再次查看结果，这是一个很好的习惯
+2.设置开机自启动也可以不用chkconfig,只需把启动的命令加到/etc/rc.local就可以
+3.切记，chkconfig和当前服务进程的运行情况没关系，只是在开机启动时影响服务的启动
+软件开机要不要跟随系统启动就是这个命令可以处理的
+
+9.linux系统运行级别一般为0-6，请分别写出每个级别的含义
+0 关机模式
+1 单用户模式
+2 无NFS的多用户模式
+3 文本模式（完整的多用户模式）
+4 未使用的
+5 图形模式
+6 重启模式
+
+10.linux系统中查看中文乱码，如何解决乱码问题
+#export LANG="zh_CN.UTF-8"
+#echo $LANG
+方法二：
+#echo 'LANG="zh_CN.UTF-8"'>/etc/sysconfig/i18n
+#source /etc/sysconfig/i18n
+
+11.如何优化linux
+
+12./etc/目录为linux系统的默认的配置文件及服务启动命令的目录
+a.请用tar打包/etc整个目录（打包及压缩）
+b.请用tar打包/etc整个目录（打包及压缩，但需要排除/etc/services文件）
+c.请把a点命令的压缩包，解压到/tmp指定目录下（最好只用tar命令实现）
+a.#tar zcvf etc.tar.gz /etc #打包前最好切换到打包目录的上一级，然后用相对路径打包
+#tar tf etc.tar.gz #查看打好的包
+b.#tar zcf etc.tar.gz /etc --exclude=etc/services
+tar:Removing leading / from member names
+tar:Removing leading / from hard link targets
+这里提示是说打包/etc时，移除/，只打包etc,防止打包后解压时，覆盖当前系统文件，可以屏蔽提示，
+但是一般不这么做，除非你有此需求
+c.#tar zvxf etc.tar.gz -C /tmp/
+           -C ,--directory DIR
+	            change to directory DIR
+
+tar命令常用选项：
+打包常用命令组合：zcvf
+-z，--gzip,--unzip
+        filter the archive through gzip||调用gzip来压缩归档文件
+-c,--create
+        create a new archive ||建立新的归档文件
+-v, --verbose
+        verbosely list files processed || 处理过程中输出相关信息
+-f, --file [HOSTNAME:]F
+        use archive file or device F(default "-",meaning stdin/stdout)
+查看压缩包内容的组合：tf
+-t,--list
+        list the contents of an archive |查看压缩包的内容列表
+解包常用的命令组合：zxvf（tar zxvf etc.tar.gz）或者xf(tar xf etc.tar.gz)
+-x,--extract ,--get
+        xtract files from an archive ||从归档文件中解出文件
+-j，--bzip2
+        filter archive through bzip2,use to decompress .bz2 files||用GNU的bzip2
+-C,--directory DIR
+       change to directory DIR|| 指定目录进行操作，如解压到指定目录
+--exclude PATTERN
+        exclude files based upon PATTERN||排除不需要处理的文件或目录
+-X, --exclude-from FILE
+        exclude files listed in FILE||指定文件列表的形式排除不需要处理的文件或目录
+-Z， --compress,--uncompress
+       filter the archive through compress ||调用compress来压缩归档文件，
+-N，--after-date DATE,--newer DATE
+       only store files newer than DATE|| 仅打包比指定日期新的文件，可用于增量打包
+-p, --same-permissions,--preserve-permissions
+           extract all protection information (保持文件属性)
+-P, --absolute-names 用绝对路径打包
+          don't strip leading '/' s from file names (打包带上“/”).恢复容易覆盖原始系统文件
+
+#方式不对无法解压
+#tar xf a.tar.gz #tar zvxf a.tar.gz
+#tar xf b.tar.bz #tar jvxf b.tar.bz
+
+#绝对路径与权限问题：
+#tar zcf /home/oldboy/etc.tar.gz /etc
+tar:Removing leading '/' from menber names
+意思是移除了"/",这是系统安全考虑，防止覆盖
+解决办法：
+加-P参数（大写的P）
+特别提示-p（€小写p为保持打包内容的属性）
+
+#生产场景案例：
+如何把一个外层目录下所有包含oldboy的目录（可能是目录的目录的目录）都打包出来
+要求：解压打包后的目录结构不能改变
+#tar -cvzf oldboy.tar.gz `find . -type d -name oldboy`
+#tar -cvzf oldboy.tar.gz `ls -F|grep /$`
+
+13.已知如下命令及结果：
+#echo "i am sb myqq is 666">>oldboy.txt
+#cat oldboy.txt
+i am sb myqq is 666
+现在需要从文件中过滤出"sb"和"666"字符串，请给出命令
+如果需要从文件中过滤出"sb,666"字符串，请再给出命令
+#我们先看看没有","时处理方法：
+法一：
+#cat oldboy.txt|cut -d " " -f3,6
+法二：
+#awk '{print $3" " $6}' oldboy.txt
+法三：
+#cut -c 6-11,20- oldboy.txt
+有","时：
+#sed 's#,# #g' oldboy.txt |cut -d " " -f3,6
+法二：
+#awk -F "," '{print $1" "$2}' oldboy.txt|awk '{print $3" " $6}'
+法三：
+#awk -F "[, ]" '{print $3" "$6}' oldboy.txt #[]多分隔符
+法四：
+#egrep -o "sb|666" oldboy.txt
+#深入浅出三剑客之awk必杀技一例：
+http://oldboy.blog.51cto.com/2561410/950730
+#深入浅出linux三剑客之sed必杀技一例
+http://oldboy.blog.51cto.com/2561410/949365
+
+14.如何查看/etc/services文件有多少行
+1.wc -l /etc/services查看文件行数
+2.所有查行号的都可以类似cat -n /etc/services|tail -1
+3.awk '{print NR $0}' /etc/services|tail -1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

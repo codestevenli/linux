@@ -1,0 +1,87 @@
+目录结构：
+
+根目录：/
+
+tree 显示目录树结构 -L层数 ；-d 只显示目录
+
+tree -Ld 1  /
+
+
+
+
+linux的目录结构，和磁盘分区是分离的，可以自由组合
+
+mount  /dev/sda1 /etc
+挂载磁盘到指定目录
+
+内容小结：
+1）linux系统的所有目录是一个有层次的倒着的树状目录结构，”/“根是所有目录的树根
+2）不同的目录数据可以跨越不同的磁盘分区或不同的磁盘设备
+3）所有的目录都是按照一定的类别有规律的组织和命名的
+
+
+
+
+/ 系统程序相关
+/usr 用户自己的程序<--user；unix系统商开发的程序<--unix software resource
+/home 用于存放用户的数据
+/usr/local 存放用户自己安装的程序，相当于c：/program files
+/bin 用于存放第三方厂商开发的程序
+
+[目录结构标准FHS]
+中文意思是目录层次标准。
+http://www.pathname.com/fhs/2.2/fhs-3.10.html
+第一层是”/“
+
+第二层是针对/usr和/var这两个目录的子目录来定义。
+
+/  --- 根目录
+├─bin          必要的二进制文件--binaries
+├─boot        静态文件的引导文件--the boot loader
+├─dev         设备文件--Device files
+├─etc          系统配置--system configuration
+├─lib           共享库和内核模块--shared libraries and kernel modules
+├─mnt         挂载点/口--Mount point
+├─opt          额外的应用软件包--Add-on application software packages
+├─sbin         系统二进制命令--system binaries
+├─tmp         公用的文件夹--Temporary files
+├─usr          第二层次
+└─var          动态数据--Variable data
+（optional）
+├─home/用户名  用户的家目录
+├─lib<qual>      轮流共享库
+└─root             管理员的家目录
+
+/proc  操作系统运行时，显示进程信息及内核信息（如cpu、硬盘分区、内存信息等）的虚拟文件系统。
+***** /proc 目录伪装的文件系统proc的挂载目录，proc并不是真正的文件系统。
+cat /proc/loadavg  #<==负载（系统繁忙程度）
+cat /proc/meminfo #<==内存信息
+cat /proc/cpuinfo   #<==cpu信息
+cat /proc/mounts   #<==挂载信息
+
+sys目录
+https://www.ibm.com/developerworks/cn/linux/l-cn-sysfs/
+
+重点：
+/dev  设备目录
+/etc   系统配置及服务配置文件，启动命令的目录
+/proc  显示内核及进程信息的虚拟文件系统
+/tmp   临时文件目录，公共空间
+/home 普通用户家目录
+/root   超级管理员的家目录
+/var    变化的目录，一般是日志文件，cache的目录
+/usr    用户程序，及数据、帮助文件、二进制命令等的目录
+/bin和/sbin和/usr/sbin  用户命令的目录
+
+
+
+课后作业预习：
+1.linux优化总结
+2.课堂中的命令总结
+3.目录结构
+
+预习：
+1.目录结构及深入
+2.第二关课前考试命令
+3.文件属性*****
+

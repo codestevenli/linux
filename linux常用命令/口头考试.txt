@@ -1,0 +1,22 @@
+1.解释下什么是gpl，gnu，自由软件
+2.如何选择linux操作系统版本
+3.安装系统时如何给linux操作系统分区
+4.描述linux系统的启动过程 *****
+5.请说出你知道的20个linux命令及作用
+6.请解释下linux的运行级别
+7.32位和64位系统的区别及如何选择
+8.什么是PATH环境变量，他有什么作用
+
+1.描述linux系统从开机到登陆界面的启动过程（记时2分钟）
+解答：
+简述：
+1.开机BIOS自检
+2.MBR引导
+3.grub引导菜单
+4.加载内核kernel
+5.启动init进程
+6.读取inittab文件，执行rc.sysinit,rc等脚本
+7.启动mingetty，进入系统登陆界面
+
+重点命令如下:
+chkonfig cat ls tail ln find wc tar cut grep egrep
